@@ -42,15 +42,37 @@ app.get("/health", (req, res) => {
   });
 });
 
+// Root endpoint
+app.get("/", (req, res) => {
+  res.json({ 
+    message: "Twilio Realtime WebSocket Server",
+    status: "running",
+    publicUrl: PUBLIC_URL,
+    endpoints: {
+      health: "/health",
+      twiml: "/twiml", 
+      tools: "/tools",
+      websocket: {
+        call: "/call",
+        logs: "/logs"
+      }
+    }
+  });
+});
+
 app.get("/public-url", (req, res) => {
   res.json({ publicUrl: PUBLIC_URL });
 });
 
 app.all("/twiml", (req, res) => {
-  const wsUrl = new URL(PUBLIC_URL);
+  // Ensure PUBLIC_URL is properly set
+  const baseUrl = PUBLIC_URL || `https://${req.get('host')}`;
+  const wsUrl = new URL(baseUrl);
   wsUrl.protocol = "wss:";
   wsUrl.pathname = `/call`;
 
+  console.log(`TwiML request - BASE_URL: ${baseUrl}, WS_URL: ${wsUrl.toString()}`);
+  
   const twimlContent = twimlTemplate.replace("{{WS_URL}}", wsUrl.toString());
   res.type("text/xml").send(twimlContent);
 });
